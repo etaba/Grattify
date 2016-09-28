@@ -34,9 +34,30 @@ def getYoutubeSearchResults(query):
 												"title":title,
 												"duration":duration})
 					except:
-						print "skipping 'a' tag"
 						continue
 	return results
+
+def findNthBest(n,searchInput,ytResults):
+	#TODO: account for deviation from average video duration
+	badKeywords = ["video","live","cover","remix","instrumental","acoustic","karaoke"]
+	goodKeywords = ["audio","lyrics"]
+	for bk in badKeywords:
+		if searchInput.find(bk) > 0:
+			badKeywords.remove(bk)
+	scoreIndex = []
+	for i in range(len(ytResults)):
+		matchScore = i
+		for bk in badKeywords:
+			if ytResults[i]['title'].find(bk) > 0:
+				matchScore += 1.1
+		for gk in goodKeywords:
+			if ytResults[i]['title'].find(gk) > 0:
+				matchScore -= 1.1
+		scoreIndex.append((i,matchScore))
+	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
+	nthIndex = bestToWorst[n-1][0]
+	return ytResults[nthIndex]
+ 		
 
 options = {
 		'format':'bestaudio/best',
@@ -54,20 +75,18 @@ options = {
 
 ydl = youtube_dl.YoutubeDL(options)
 songs = inFile.readlines()
-points = {}
-
+try:
+	attempt = int(songs[0].strip())
+except:
+	attempt = 1
 for song in songs:
-	songParts = song.split(",")
-	title = songParts[0]
-	artist = songParts[1]
-	if (len(songParts) > 2): #additional details
-		option = songParts[2]
-
-	#TODO: replace spaces with +
-	searchString = artist + "+" + title
+	searchString = song.replace(' ','+') + "+audio"
 
 	results = getYoutubeSearchResults(searchString)
-	print results
+	for r in results:
+		print r['link']
+	songURL = findNthBest(attempt,searchString,results)['link']
+	print songURL
 	sys.exit()
 	savePath = makeSavepath(title,artist)
 	print savePath
@@ -83,18 +102,7 @@ for song in songs:
 			print "Downloaded and converted %s successfully!" % savePath
 		except Exception as e:
 			print "Can't download audio! %s\n" % traceback.format_exc()
-	#in response: div .search_form -> 1st div #row -> div #span2 -> a href
-	#r = requests.post('http://convert2mp3.net/en/index.php?p=convert', data = {"url":songURL,'format':'mp3','quality':"1",'3rfoos':"49554"})
-	#r = requests.post('http://convert2mp3.net/en/index.php?p=complete&id='+songID, data = {"url":songURL,'format':'mp3','quality':"1",'3rfoos':"49554"})
-	##attached to url: &key=CYxCxnlOg7k5
-	#r = requests.post('http://convert2mp3.net/download.php?id='+songID+'&d=y')
-	##print r.content
-	#print r.content
-	#with open(local_filename, 'wb') as f:
-	#	for chunk in r.iter_content(chunk_size=1024): 
-	#		if chunk: # filter out keep-alive new chunks
-	#			f.write(chunk)
-	#			#f.flush() commented by recommendation from J.F.Sebastian
+
 
 
 	
