@@ -1,11 +1,11 @@
 #TODO:
 #format saved files to recognize name and artist
 #package libraries
-#multithreading
-#parse spotify playlists
+#multithreading?
 #error messages and collecting failed songs
 #songs with '/' in the name dont work (interpreted as directory...)
 #status, how many songs of total have been downloaded
+#chrome extension to download song currently being listened to
 from __future__ import unicode_literals
 from bs4 import BeautifulSoup
 import sys, requests, youtube_dl, os, traceback, spotipy, urllib
@@ -23,6 +23,7 @@ options = {
 		'noplaylist':True,
 		'nocheckcertificate':True,
 		'proxy':"",
+		'addmetadata':True,
 		'postprocessors': [{
         	'key': 'FFmpegExtractAudio',
         	'preferredcodec': 'mp3',
@@ -37,8 +38,8 @@ if not os.path.exists(saveDir):
 	os.makedirs(saveDir)
 
 def downloadSong(title,artist,attempt):
-	print title,artist
-	searchString = (artist+','+title).replace(' ','+') + "+audio"
+	#print title,"---",artist
+	searchString = (artist+'+'+title).replace(' ','+')
 	results = getYoutubeSearchResults(searchString)
 	songURL = findNthBestLink(attempt,searchString,results)['link']
 	savePath = makeSavepath(title,artist)
@@ -49,12 +50,15 @@ def downloadSong(title,artist,attempt):
 	except OSError: #download video
 		try:
 			result = ydl.extract_info(songURL, download=True)
+			print savePath
 			os.rename(result['id'] +'.mp3', savePath)
 			print "Downloaded and converted %s successfully!" % savePath
 		except Exception as e:
 			print "Can't download audio! %s\n" % traceback.format_exc()
 
 def makeSavepath(title,artist,saveDir=saveDir):
+	title = title.replace('/',' ')
+	artist = artist.replace('/',' ')
 	return os.path.join(saveDir,"%s--%s.mp3" % (title, artist))
 
 def getYoutubeSearchResults(query):
@@ -73,7 +77,7 @@ def getYoutubeSearchResults(query):
 							#if 'class' in li.parent.attrs and "yt-lockup-meta-info" in li.parent['class']:
 							if "views" in li.text:
 								viewCount = li.text.split(' ')[-2][3:]
-								results.append({"viewCount":viewCount,
+								results.append({"viewCount":int(viewCount.replace(',','')),
 												"link":"https://www.youtube.com"+link,
 												"title":title,
 												"duration":duration})
@@ -82,9 +86,11 @@ def getYoutubeSearchResults(query):
 	return results
 
 def findNthBestLink(n,searchInput,ytResults):
+	ytResults = sorted(ytResults,key = lambda r: r['viewCount'],reverse=True)
 	#TODO: account for deviation from average video duration
 	badKeywords = ["video","live","cover","remix","instrumental","acoustic","karaoke"]
-	goodKeywords = ["audio","lyrics"]
+	goodKeywords = ["audio","lyric"] + searchInput.split('+')
+	
 	for bk in badKeywords:
 		if searchInput.find(bk) > 0:
 			badKeywords.remove(bk)
@@ -100,6 +106,9 @@ def findNthBestLink(n,searchInput,ytResults):
 		scoreIndex.append((i,matchScore))
 	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
 	nthIndex = bestToWorst[n-1][0]
+	#print "1st: ",ytResults[bestToWorst[n-1][0]]['link']
+	#print "2nd: ",ytResults[bestToWorst[n][0]]['link']
+	#print "3rd: ",ytResults[bestToWorst[n+1][0]]['link']
 	return ytResults[nthIndex]
  		
 def parsePandoraLikes(pandoraLikesPage):
@@ -233,7 +242,8 @@ if len(sys.argv) > 1: #using command line arguments
 	if sys.argv[1] == "-pandora" or sys.argv[1] == "-p":
 		pandoraFile = sys.argv[2]
 		tracks = parsePandoraLikes(pandoraFile)
-		for track in tracks:
+		for i,track in enumerate(tracks):
+			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
 			downloadSong(track[0],track[1],1)
 	if sys.argv[1] == "-help" or sys.argv[1] == "-h":
 		print "USAGE:"
