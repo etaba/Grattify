@@ -85,7 +85,7 @@ def getYoutubeSearchResults(query):
 def findNthBestLink(n,searchInput,ytResults,artist,title):
 	#ytResults = sorted(ytResults,key = lambda r: r['viewCount'],reverse=True)
 	#TODO: account for deviation from average video duration
-	badKeywords = ["video","live","cover","remix","instrumental","acoustic","karaoke"]
+	badKeywords = ["video","album","live","cover","remix","instrumental","acoustic","karaoke"]
 	goodKeywords = ["audio","lyric"]# + searchInput.split('+')
 	
 	badKeywords = filter(lambda bk: searchInput.find(bk) < 0,badKeywords)
@@ -328,7 +328,7 @@ if len(sys.argv) > 2: #using command line arguments
 		for m in ms:
 			print m
 
-	print failedDownloads if len(failedDownloads) > 0 else "All songs downloaded!"
+	print "Failed: ",failedDownloads if len(failedDownloads) > 0 else "All songs downloaded!"
 else:
 	print "USAGE:"
 	print '-spotify "user@email.com"'
@@ -345,7 +345,7 @@ else:
 #format saved files to recognize name and artist
 #package libraries
 #multithreading?
-#error messages and collecting failed songs
+#replace all non alphanumeric characters? or at least apostrophes
 #chrome extension to download song currently being listened to
 
 	
