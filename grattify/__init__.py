@@ -1,10 +1,26 @@
 from __future__ import unicode_literals
-from .grattify import *
 from bs4 import BeautifulSoup
 import sys, requests, youtube_dl, os, traceback, spotipy, urllib,pprint
 import spotipy.util as util
 
 def downloadSong(title,artist,attempt,saveDir):
+	options = {
+		'format':'bestaudio/best',
+		'extractaudio':True,
+		'audioformat':'mp3',
+		'outtmpl':'%(id)s.%(ext)s',		#name the file the ID of the video
+		'noplaylist':True,
+		'nocheckcertificate':True,
+		'proxy':"",
+		'addmetadata':True,
+		'postprocessors': [{
+        	'key': 'FFmpegExtractAudio',
+        	'preferredcodec': 'mp3',
+        	'preferredquality': '192',
+    	}]
+	}
+
+	ydl = youtube_dl.YoutubeDL(options)
 	searchString = (artist.lower()+'+'+title.lower()).replace(' ','+')
 	results = getYoutubeSearchResults(searchString)
 	if results == False:
