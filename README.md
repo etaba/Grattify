@@ -19,21 +19,21 @@ Quick Start:
 grattify 
 	Shows you list of possible commands
 
-grattify -spotify <spotifyUsername>
+grattify -spotify mySpotifyUsername
 	STOPPED WORKING FUCK
 	Brings you to the spotify login page, then downloads your spotify playlists
 
-grattify -song "The Beatles" "Come Together"
+grattify -song "the beatles" "come together"
 	Download a single song by providing the artist and song name
 
-grattify -album "The Beatles" "Abbey Road" 
+grattify -album "the beatles" "abbey road" 
 	Download a whole album by providing the artist and album name
 
-grattify -top 18 "The Beatles"'
+grattify -top 18 "the beatles"'
 	Download the top N songs by an artist by providing the number N and the artist
 
 grattify -file "songList.txt"'
 	Download songs listed on a text file. The file can contain 3 types of lines:
-		<artist> - <song>  (must be hyphen separated)
-		album: <album> - <artist>
-		top 16: <artist>
+		artist - song (must be hyphen separated, shouldnt need quotes around artist or song)
+		album: album - artist
+		top 16: artist
