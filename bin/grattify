@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 #from __future__ import unicode_literals
 
-from grattify import *
+from grattify import downloadSong
 import sys, os
 
 SPOTIPY_CLIENT_ID = "6ddf2f4253a847c5bac62b17cd735e66"
 SPOTIPY_CLIENT_SECRET = "5b54de875ad349f3bb1bbecd5832f276"
-SPOTIPY_REDIRECT_URI = "tabatest://callback"
+SPOTIPY_REDIRECT_URI = "http://tabatest://callback"
 
 #MAIN EXECUTION
 
@@ -112,7 +112,12 @@ if len(sys.argv) > 2: #using command line arguments
 		for m in ms:
 			print m
 
-	print "Failed: ",failedDownloads if len(failedDownloads) > 0 else "All songs downloaded!"
+	if len(failedDownloads) > 0:
+		print "Some songs failed to download :("
+		for fail in failedDownloads:
+			print fail
+	else:
+		print "All songs downloaded!"
 else:
 	print "USAGE:"
 	print '-spotify "user@email.com"'
@@ -120,21 +125,3 @@ else:
 	print '-album "Abbey Road" "The Beatles"'
 	print '-top 5 "The Beatles"'
 	print '-file "songList.txt"'
-
-
-
-
-	
-#TODO:
-#format saved files to recognize name and artist
-#package libraries
-#multithreading?
-#replace all non alphanumeric characters? or at least apostrophes
-#chrome extension to download song currently being listened to
-
-	
-
-
-
-
-	

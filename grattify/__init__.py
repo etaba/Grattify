@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 from bs4 import BeautifulSoup
-import sys, requests, youtube_dl, os, traceback, spotipy, urllib,pprint
+import sys, requests, youtube_dl, os, traceback, spotipy, urllib,pprint,re
 import spotipy.util as util
 
 def downloadSong(title,artist,attempt,saveDir):
+	savePath = makeSavepath(title,artist,saveDir)
+	print artist,"---",title
 	options = {
 		'format':'bestaudio/best',
 		'extractaudio':True,
@@ -19,15 +21,17 @@ def downloadSong(title,artist,attempt,saveDir):
         	'preferredquality': '192',
     	}]
 	}
-
+	#reformat
+	title = re.sub('[^0-9a-zA-Z ]+', '', title.lower()).replace(' ','+')
+	artist = re.sub('[^0-9a-zA-Z ]+', '', artist.lower()).replace(' ','+')
+	searchString = artist + '+' + title
+	#searchString = (artist.lower()+'+'+title.lower()).replace(' ','+')
 	ydl = youtube_dl.YoutubeDL(options)
-	searchString = (artist.lower()+'+'+title.lower()).replace(' ','+')
 	results = getYoutubeSearchResults(searchString)
 	if results == False:
 		return False
 	songURL = findNthBestLink(attempt,searchString,results,artist.lower(),title.lower())['link']
-	savePath = makeSavepath(title,artist,saveDir)
-	#print artist,"---",title
+	
 	#return
 	try: #video already being downloaded
 		os.stat(savePath)
@@ -78,14 +82,11 @@ def getYoutubeSearchResults(query):
 
 def findNthBestLink(n,searchInput,ytResults,artist,title):
 	#ytResults = sorted(ytResults,key = lambda r: r['viewCount'],reverse=True)
-	#TODO: account for deviation from average video duration
 	badKeywords = ["video","album","live","cover","remix","instrumental","acoustic","karaoke"]
 	goodKeywords = ["audio","lyric"]# + searchInput.split('+')
 	
 	badKeywords = filter(lambda bk: searchInput.find(bk) < 0,badKeywords)
-	#for bk in badKeywords:
-	#	if searchInput.find(bk) > 0:
-	#		badKeywords.remove(bk)
+
 	scoreIndex = []
 	for i,ytR in enumerate(ytResults):
 		matchScore = i
@@ -99,14 +100,11 @@ def findNthBestLink(n,searchInput,ytResults,artist,title):
 			matchScore -= 5
 		if ytR['title'].find(title) != -1:
 			matchScore -= 3
-		#for sI in searchInput.split('+'):
-		#	if len(sI) > 3 and ytR['title'].find(sI) > 0:
-		#		matchScore -= 5
 		scoreIndex.append((i,matchScore))
 	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
 	nthBest = bestToWorst[n-1][0]
 	#printResults(ytResults,bestToWorst)
-	print "1st: ",ytResults[bestToWorst[n-1][0]]['link']
+	#print "1st: ",ytResults[bestToWorst[n-1][0]]['link']
 	#print "2nd: ",ytResults[bestToWorst[n][0]]['link']
 	#print "3rd: ",ytResults[bestToWorst[n+1][0]]['link']
 	return ytResults[nthBest]
@@ -127,19 +125,6 @@ def parsePandoraLikes(pandoraLikesPage):
 	for div in soup.findAll('div',id=lambda x: x and x.startswith('tracklike')):
 		info = div.findAll('a')
 		songs.append((info[0].text,info[1].text))
-	return songs
-
-def getSpotifyTop5(artist):
-	sp = spotipy.Spotify()
-	results = sp.search(q="artist:"+artist,type='artist')
-	url = results['artists']['items'][0]['external_urls']['spotify']
-	r = requests.get(url)
-	soup = BeautifulSoup(r.content,'html.parser')
-	songs =[]
-	for i in range(5):
-		row = soup.find('tr',{'data-index':i})
-		div = row.find('div',{'data-log-click':"name"})
-		songs.append(div.text.strip())
 	return songs
 
 def getTopN(artist,n):
@@ -199,11 +184,11 @@ def compare(file1,file2):
 	c1 = []
 	for i,l in enumerate(lines1):
 		if l[:4]=="1st:":
-			c1.append(lines1[i-1] + ":::" + l[4:])
+			c1.append(lines1[i+1] + ":::" + l[4:])
 	c2 = []
 	for i,l in enumerate(lines2):
 		if l[:4]=="1st:":
-			c2.append(lines2[i+3] + ":::" + l[4:])
+			c2.append(lines2[i+1] + ":::" + l[4:])
 
 	misMatches = filter((lambda (l1,l2): l1 != l2),zip(c1,c2))
 	changeLog = file("changeLog.txt","w+")
@@ -212,5 +197,7 @@ def compare(file1,file2):
 		artist = m[m.find("---")+4:m.find("\n:::")]
 		song = m[:m.find("---")]
 		#print artist,song
-		changeLog.write(artist + "," + song + '\n')
+		changeLog.write(artist + "," + song + m + '\n')
 	return misMatches
+
+
