@@ -1,4 +1,7 @@
-.DS_Store
+# spotify auth token caches
+.cache*
+
+**/.DS_Store
 
 # Compiled python modules.
 *.pyc

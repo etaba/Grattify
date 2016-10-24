@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 #from __future__ import unicode_literals
 
-from grattify import downloadSong
+from grattify import *
 import sys, os
-
-SPOTIPY_CLIENT_ID = "6ddf2f4253a847c5bac62b17cd735e66"
-SPOTIPY_CLIENT_SECRET = "5b54de875ad349f3bb1bbecd5832f276"
-SPOTIPY_REDIRECT_URI = "http://tabatest://callback"
 
 #MAIN EXECUTION
 
@@ -57,10 +53,10 @@ if len(sys.argv) > 2: #using command line arguments
 			attempt = 1
 		for line in lines:
 			print "\nDOWNLOADING LINE %d / %d\n" % (i+1,len(lines))
-			songParts = line.split(",")
+			songParts = line.split("-")
 			if line[:6].lower()=="album:": #Album:the wall,pink floyd
 				artist = songParts[-1]
-				album = ",".join(songParts[:-1])
+				album = "-".join(songParts[:-1])
 				album=album[6:]
 				tracks = getAlbum(artist,album)
 				for track in tracks:
@@ -92,7 +88,7 @@ if len(sys.argv) > 2: #using command line arguments
 		tracks = getSpotifyPlaylists(username)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track[1],track[0],1):
+			if not downloadSong(track[1],track[0],1,saveDir):
 				failedDownloads.append((track[1],track[0]))
 
 	if sys.argv[1] == "-pandora" or sys.argv[1] == "-p":

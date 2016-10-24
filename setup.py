@@ -7,7 +7,7 @@ def readme():
 setup(
   name = 'grattify',
   packages = ['grattify'], # this must be the same as the name above
-  version = '0.2.1',
+  version = '0.2.2',
   description = 'Script to download music',
   author = 'Eric Taba',
   author_email = 'eptaba@gmail.com',
@@ -19,7 +19,8 @@ setup(
         'bs4',
         'requests',
         'youtube_dl',
-        'spotipy'
+        'spotipy',
+        'mutagen'
   ],
   scripts=['bin/grattify'],
   include_package_data=True

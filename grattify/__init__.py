@@ -2,6 +2,12 @@ from __future__ import unicode_literals
 from bs4 import BeautifulSoup
 import sys, requests, youtube_dl, os, traceback, spotipy, urllib,pprint,re
 import spotipy.util as util
+from mutagen.easyid3 import EasyID3
+
+
+SPOTIPY_CLIENT_ID = "6ddf2f4253a847c5bac62b17cd735e66"
+SPOTIPY_CLIENT_SECRET = "5b54de875ad349f3bb1bbecd5832f276"
+SPOTIPY_REDIRECT_URI = "http://tabatest://callback"
 
 def downloadSong(title,artist,attempt,saveDir):
 	savePath = makeSavepath(title,artist,saveDir)
@@ -22,9 +28,12 @@ def downloadSong(title,artist,attempt,saveDir):
     	}]
 	}
 	#reformat
-	title = re.sub('[^0-9a-zA-Z ]+', '', title.lower()).replace(' ','+')
-	artist = re.sub('[^0-9a-zA-Z ]+', '', artist.lower()).replace(' ','+')
-	searchString = artist + '+' + title
+	searchString = artist + ' ' + title
+	searchString = re.sub('[^0-9a-zA-Z ]+', '', searchString.lower()).replace(' ','+')
+	print searchString
+	#title = re.sub('[^0-9a-zA-Z ]+', '', title.lower()).replace(' ','+')
+	#artist = re.sub('[^0-9a-zA-Z ]+', '', artist.lower()).replace(' ','+')
+	#searchString = artist + '+' + title
 	#searchString = (artist.lower()+'+'+title.lower()).replace(' ','+')
 	ydl = youtube_dl.YoutubeDL(options)
 	results = getYoutubeSearchResults(searchString)
@@ -32,7 +41,7 @@ def downloadSong(title,artist,attempt,saveDir):
 		return False
 	songURL = findNthBestLink(attempt,searchString,results,artist.lower(),title.lower())['link']
 	
-	#return
+	return
 	try: #video already being downloaded
 		os.stat(savePath)
 		print "%s already downloaded, continuing..." % savePath
@@ -41,6 +50,10 @@ def downloadSong(title,artist,attempt,saveDir):
 			result = ydl.extract_info(songURL, download=True)
 			print savePath
 			os.rename(result['id'] +'.mp3', savePath)
+			metatag = EasyID3(savePath)
+			metatag['title'] = title
+			metatag['artist'] = artist
+			metatag.save()
 			print "Downloaded and converted %s successfully!" % savePath
 		except Exception as e:
 			print "Can't download audio! %s\n" % traceback.format_exc()
@@ -102,8 +115,9 @@ def findNthBestLink(n,searchInput,ytResults,artist,title):
 			matchScore -= 3
 		scoreIndex.append((i,matchScore))
 	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
+	print bestToWorst
 	nthBest = bestToWorst[n-1][0]
-	#printResults(ytResults,bestToWorst)
+	printResults(ytResults,bestToWorst)
 	#print "1st: ",ytResults[bestToWorst[n-1][0]]['link']
 	#print "2nd: ",ytResults[bestToWorst[n][0]]['link']
 	#print "3rd: ",ytResults[bestToWorst[n+1][0]]['link']
@@ -166,9 +180,9 @@ def getSpotifyPlaylists(username):
 			print '  total tracks', playlist['tracks']['total']
 			results = sp.user_playlist(user, playlist['id'],
 			    fields="tracks,next")
-			tracks = results['tracks']
+			songs = results['tracks']
 			#sp.show_tracks(tracks)
-			for item in tracks['items']:
+			for item in songs['items']:
 				tracks.append((item['track']['artists'][0]['name'],item['track']['name']))
 			#while tracks['next']:
 			#    tracks = sp.next(tracks)
