@@ -1,0 +1,22 @@
+<<<<<<< HEAD
+# spotify auth token caches
+.cache*
+
+**/.DS_Store
+=======
+# OS generated files
+.DS_Store
+.DS_Store?
+>>>>>>> e681f3e013dd18cb6e2f84b4e8cbdc1022371611
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+#debugging files
+/workShop/
