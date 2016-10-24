@@ -20,7 +20,6 @@
 	* Shows you list of possible commands
 
 * grattify -spotify mySpotifyUsername
-	* STOPPED WORKING FUCK
 	* Brings you to the spotify login page, then downloads your spotify playlists
 
 * grattify -song "the beatles" "come together"
