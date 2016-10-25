@@ -4,20 +4,25 @@
 from grattify import *
 import sys, os
 
+#todo: add track #'s for albums and top
+#keep log of already downloaded songs, to be able to diff?
+
+
+
 #MAIN EXECUTION
 
 failedDownloads = []
 if len(sys.argv) > 2: #using command line arguments
 	if sys.argv[1] == "-album" or sys.argv[1] == "-a":
-		album = sys.argv[2]
-		artist = sys.argv[3]
+		artist = sys.argv[2]
+		album = sys.argv[3]
 		saveDir = album
 		if not os.path.exists(saveDir):
 			os.makedirs(saveDir)
 		tracks = getAlbum(artist,album)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track,artist,1,saveDir):
+			if not downloadSong(track,artist,1,saveDir,str(i)):
 				failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-song" or sys.argv[1] == "-s":
@@ -38,7 +43,7 @@ if len(sys.argv) > 2: #using command line arguments
 		tracks = getTopN(artist,n)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track,artist,1,saveDir):
+			if not downloadSong(track,artist,1,saveDir,str(i)):
 				failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-file" or sys.argv[1] == "-f":
@@ -81,15 +86,22 @@ if len(sys.argv) > 2: #using command line arguments
 					failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-spotify" or sys.argv[1] == "-sp":
-		saveDir = "SpotifySongs"
-		if not os.path.exists(saveDir):
-			os.makedirs(saveDir)
 		username = sys.argv[2]
-		tracks = getSpotifyPlaylists(username)
-		for i,track in enumerate(tracks):
-			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track[1],track[0],1,saveDir):
-				failedDownloads.append((track[1],track[0]))
+		#check if user specified particular playlists
+		if len(sys.argv) > 3:
+			playlists = getSpotifyPlaylists(username,sys.argv[3:])
+		else:
+			playlists = getSpotifyPlaylists(username,[])
+		pp = pprint.PrettyPrinter(indent=4)
+		pp.pprint(playlists)
+		for playlist in playlists:
+			saveDir = playlist['name']
+			if not os.path.exists(saveDir):
+				os.makedirs(saveDir)
+			for i,track in enumerate(playlist['tracks']):
+				print "\nDOWNLOADING SONG %d / %d in playlist: %s\n" % (i+1,len(playlist['tracks']),playlist['name'])
+				if not downloadSong(track[1],track[0],1,saveDir,str(i)):
+					failedDownloads.append((track[1],track[0]))
 
 	if sys.argv[1] == "-pandora" or sys.argv[1] == "-p":
 		saveDir = "Pandora_Liked_Songs"

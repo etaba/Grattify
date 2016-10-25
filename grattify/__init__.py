@@ -9,7 +9,7 @@ SPOTIPY_CLIENT_ID = "6ddf2f4253a847c5bac62b17cd735e66"
 SPOTIPY_CLIENT_SECRET = "5b54de875ad349f3bb1bbecd5832f276"
 SPOTIPY_REDIRECT_URI = "http://tabatest://callback"
 
-def downloadSong(title,artist,attempt,saveDir):
+def downloadSong(title,artist,attempt,saveDir,trackNum=""):
 	savePath = makeSavepath(title,artist,saveDir)
 	print artist,"---",title
 	options = {
@@ -30,18 +30,17 @@ def downloadSong(title,artist,attempt,saveDir):
 	#reformat
 	searchString = artist + ' ' + title
 	searchString = re.sub('[^0-9a-zA-Z ]+', '', searchString.lower()).replace(' ','+')
-	print searchString
-	#title = re.sub('[^0-9a-zA-Z ]+', '', title.lower()).replace(' ','+')
-	#artist = re.sub('[^0-9a-zA-Z ]+', '', artist.lower()).replace(' ','+')
-	#searchString = artist + '+' + title
-	#searchString = (artist.lower()+'+'+title.lower()).replace(' ','+')
+	#print searchString
 	ydl = youtube_dl.YoutubeDL(options)
 	results = getYoutubeSearchResults(searchString)
-	if results == False:
-		return False
+	if results == False or len(results) == 0:
+		#try again with unformatted input
+		results = getYoutubeSearchResults(artist+'+'+title)
+		if results == False or len(results) == 0:
+			return False
 	songURL = findNthBestLink(attempt,searchString,results,artist.lower(),title.lower())['link']
 	
-	return
+	#return
 	try: #video already being downloaded
 		os.stat(savePath)
 		print "%s already downloaded, continuing..." % savePath
@@ -53,6 +52,8 @@ def downloadSong(title,artist,attempt,saveDir):
 			metatag = EasyID3(savePath)
 			metatag['title'] = title
 			metatag['artist'] = artist
+			metatag.RegisterTextKey("track", "TRCK")
+			metatag['track'] = trackNum
 			metatag.save()
 			print "Downloaded and converted %s successfully!" % savePath
 		except Exception as e:
@@ -94,7 +95,6 @@ def getYoutubeSearchResults(query):
 	return results
 
 def findNthBestLink(n,searchInput,ytResults,artist,title):
-	#ytResults = sorted(ytResults,key = lambda r: r['viewCount'],reverse=True)
 	badKeywords = ["video","album","live","cover","remix","instrumental","acoustic","karaoke"]
 	goodKeywords = ["audio","lyric"]# + searchInput.split('+')
 	
@@ -115,12 +115,8 @@ def findNthBestLink(n,searchInput,ytResults,artist,title):
 			matchScore -= 3
 		scoreIndex.append((i,matchScore))
 	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
-	print bestToWorst
 	nthBest = bestToWorst[n-1][0]
-	printResults(ytResults,bestToWorst)
-	#print "1st: ",ytResults[bestToWorst[n-1][0]]['link']
-	#print "2nd: ",ytResults[bestToWorst[n][0]]['link']
-	#print "3rd: ",ytResults[bestToWorst[n+1][0]]['link']
+	#printResults(ytResults,bestToWorst)
 	return ytResults[nthBest]
  		
 def printResults(ytResults,bestToWorst):
@@ -167,30 +163,32 @@ def getAlbum(artist,album):
 	except Exception as e:
 		print "SEARCH ERROR: Couldnt find album "+album+" by "+artist
 
-def getSpotifyPlaylists(username):
+def getSpotifyPlaylists(username,reqPlaylists):
 	scope = "playlist-read-private user-library-read"
 	token = spotipy.util.prompt_for_user_token(username, scope,SPOTIPY_CLIENT_ID,SPOTIPY_CLIENT_SECRET,SPOTIPY_REDIRECT_URI)
-	tracks = []
+	playlists = []
 	if token:
 	    sp = spotipy.Spotify(auth=token)
 	    user = sp.current_user()['id']
-	    playlists = sp.user_playlists(user)
-	    for playlist in playlists['items']:
-			print playlist['name']
-			print '  total tracks', playlist['tracks']['total']
-			results = sp.user_playlist(user, playlist['id'],
-			    fields="tracks,next")
-			songs = results['tracks']
-			#sp.show_tracks(tracks)
-			for item in songs['items']:
-				tracks.append((item['track']['artists'][0]['name'],item['track']['name']))
-			#while tracks['next']:
-			#    tracks = sp.next(tracks)
-			#    show_tracks(tracks)
-			#print track['name'] + ' - ' + track['artists'][0]['name']
+	    spPlaylists = sp.user_playlists(user)
+	    for playlist in spPlaylists['items']:
+	    	if (len(reqPlaylists) == 0 or playlist['name'].lower() in [pl.lower() for pl in reqPlaylists]):
+				#print '  total tracks', playlist['tracks']['total']
+				results = sp.user_playlist(user, playlist['id'],
+				    fields="tracks,next")
+				#songs = results['tracks']
+				#sp.show_tracks(tracks)
+				#for item in songs['items']:
+				#	tracks.append((item['track']['artists'][0]['name'],item['track']['name']))
+				#tracks = map((lambda item:(item['track']['artists'][0]['name'],item['track']['name'])),results['tracks']['items']))
+				songs = map((lambda item:item['track']['name']),results['tracks']['items'])
+				artists = map((lambda item:item['track']['artists'][0]['name']),results['tracks']['items'])
+				tracks = zip(artists,songs)
+				
+				playlists.append({'name':playlist['name'],'tracks':tracks})
 	else:
 	    print "Can't get token for", username
-	return tracks
+	return playlists
 
 def compare(file1,file2):
 	lines1 = file(file1).readlines()

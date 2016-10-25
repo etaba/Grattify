@@ -19,8 +19,9 @@
 * grattify 
 	* Shows you list of possible commands
 
-* grattify -spotify mySpotifyUsername
+* grattify -spotify mySpotifyUsername 
 	* Brings you to the spotify login page, then downloads your spotify playlists
+	* If you only want to download certain playlists, specify them after your username: 'grattify -spotify myUsername "my playlist 1" "my playlist 2" ... '
 
 * grattify -song "the beatles" "come together"
 	* Download a single song by providing the artist and song name
