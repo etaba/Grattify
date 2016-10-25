@@ -7,7 +7,7 @@ def readme():
 setup(
   name = 'grattify',
   packages = ['grattify'], # this must be the same as the name above
-  version = '0.2.3',
+  version = '0.2.4',
   description = 'Script to download music',
   author = 'Eric Taba',
   author_email = 'eptaba@gmail.com',

@@ -22,7 +22,7 @@ if len(sys.argv) > 2: #using command line arguments
 		tracks = getAlbum(artist,album)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track,artist,1,saveDir,str(i)):
+			if not downloadSong(track,artist,1,saveDir,str(i+1)):
 				failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-song" or sys.argv[1] == "-s":
@@ -43,7 +43,7 @@ if len(sys.argv) > 2: #using command line arguments
 		tracks = getTopN(artist,n)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track,artist,1,saveDir,str(i)):
+			if not downloadSong(track,artist,1,saveDir,str(i+1)):
 				failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-file" or sys.argv[1] == "-f":
@@ -100,7 +100,7 @@ if len(sys.argv) > 2: #using command line arguments
 				os.makedirs(saveDir)
 			for i,track in enumerate(playlist['tracks']):
 				print "\nDOWNLOADING SONG %d / %d in playlist: %s\n" % (i+1,len(playlist['tracks']),playlist['name'])
-				if not downloadSong(track[1],track[0],1,saveDir,str(i)):
+				if not downloadSong(track[1],track[0],1,saveDir,str(i+1)):
 					failedDownloads.append((track[1],track[0]))
 
 	if sys.argv[1] == "-pandora" or sys.argv[1] == "-p":
