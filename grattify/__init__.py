@@ -30,7 +30,6 @@ def downloadSong(title,artist,attempt,saveDir,trackNum=""):
 	#reformat
 	searchString = artist + ' ' + title
 	searchString = re.sub('[^0-9a-zA-Z ]+', '', searchString.lower()).replace(' ','+')
-	#print searchString
 	ydl = youtube_dl.YoutubeDL(options)
 	results = getYoutubeSearchResults(searchString)
 	if results == False or len(results) == 0:
@@ -64,7 +63,7 @@ def downloadSong(title,artist,attempt,saveDir,trackNum=""):
 def makeSavepath(title,artist,saveDir):
 	title = title.replace('/',' ')
 	artist = artist.replace('/',' ')
-	return os.path.join(saveDir,"%s -- %s.mp3" % (artist, title))
+	return os.path.join(saveDir,"%s - %s.mp3" % (artist, title))
 
 def getYoutubeSearchResults(query):
 	results= []
@@ -83,7 +82,6 @@ def getYoutubeSearchResults(query):
 						title = a['title']
 						duration  = a.parent.find('span').text.split(' ')[-1][:-1]
 						for li in div:
-							#if 'class' in li.parent.attrs and "yt-lockup-meta-info" in li.parent['class']:
 							if "views" in li.text:
 								viewCount = li.text.split(' ')[-2][3:]
 								results.append({"viewCount":int(viewCount.replace(',','')),
@@ -96,7 +94,7 @@ def getYoutubeSearchResults(query):
 
 def findNthBestLink(n,searchInput,ytResults,artist,title):
 	badKeywords = ["video","album","live","cover","remix","instrumental","acoustic","karaoke"]
-	goodKeywords = ["audio","lyric"]# + searchInput.split('+')
+	goodKeywords = ["audio","lyric"]
 	
 	badKeywords = filter(lambda bk: searchInput.find(bk) < 0,badKeywords)
 
@@ -148,7 +146,8 @@ def getTopN(artist,n):
 			songs.append(song)
 		return songs
 	except Exception as e:
-		print "SEARCH ERROR: Couldnt find top "+str(n)+" songs by "+artist
+		print "SEARCH ERROR: Couldnt find top "+str(n)+" songs by "+artist+". Check that the artist is spelled correctly."
+		return False
 
 def getAlbum(artist,album):
 	try:
@@ -156,12 +155,9 @@ def getAlbum(artist,album):
 		soup = BeautifulSoup(r.content,'html.parser')
 		tds = soup.findAll("td",{"class":"chartlist-name"})
 		return map((lambda td: td.find("a").text),tds)
-		#songs = []
-		#for td in tds:
-		#	song = td.find("a").text
-		#	songs.append(song)
 	except Exception as e:
-		print "SEARCH ERROR: Couldnt find album "+album+" by "+artist
+		print "SEARCH ERROR: Couldnt find album "+album+" by "+artist+". Check that the album name is spelled correctly."
+		return False
 
 def getSpotifyPlaylists(username,reqPlaylists):
 	scope = "playlist-read-private user-library-read"
@@ -173,14 +169,8 @@ def getSpotifyPlaylists(username,reqPlaylists):
 	    spPlaylists = sp.user_playlists(user)
 	    for playlist in spPlaylists['items']:
 	    	if (len(reqPlaylists) == 0 or playlist['name'].lower() in [pl.lower() for pl in reqPlaylists]):
-				#print '  total tracks', playlist['tracks']['total']
 				results = sp.user_playlist(user, playlist['id'],
 				    fields="tracks,next")
-				#songs = results['tracks']
-				#sp.show_tracks(tracks)
-				#for item in songs['items']:
-				#	tracks.append((item['track']['artists'][0]['name'],item['track']['name']))
-				#tracks = map((lambda item:(item['track']['artists'][0]['name'],item['track']['name'])),results['tracks']['items']))
 				songs = map((lambda item:item['track']['name']),results['tracks']['items'])
 				artists = map((lambda item:item['track']['artists'][0]['name']),results['tracks']['items'])
 				tracks = zip(artists,songs)
@@ -208,7 +198,6 @@ def compare(file1,file2):
 		m = mPair[0]
 		artist = m[m.find("---")+4:m.find("\n:::")]
 		song = m[:m.find("---")]
-		#print artist,song
 		changeLog.write(artist + "," + song + m + '\n')
 	return misMatches
 

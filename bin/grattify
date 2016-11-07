@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-#from __future__ import unicode_literals
 
 from grattify import *
 import sys, os
 
-#todo: add track #'s for albums and top
 #keep log of already downloaded songs, to be able to diff?
-
-
 
 #MAIN EXECUTION
 
@@ -31,7 +27,11 @@ if len(sys.argv) > 2: #using command line arguments
 			os.makedirs(saveDir)
 		artist = sys.argv[2]
 		song = sys.argv[3]
-		if not downloadSong(song,artist,1,saveDir):
+		if len(sys.argv) > 4: #numeric attempt has been specified
+			attempt = int(sys.argv[4])
+		else:
+			attempt = 1
+		if not downloadSong(song,artist,attempt,saveDir):
 			failedDownloads.append((song,artist))
 
 	if sys.argv[1] == "-top" or sys.argv[1] == "-t":
@@ -56,16 +56,18 @@ if len(sys.argv) > 2: #using command line arguments
 			attempt = int(lines[0].strip())
 		except:
 			attempt = 1
-		for line in lines:
+		for i,line in enumerate(lines):
 			print "\nDOWNLOADING LINE %d / %d\n" % (i+1,len(lines))
 			songParts = line.split("-")
-			if line[:6].lower()=="album:": #Album:the wall,pink floyd
+			if line[:6].lower()=="album:": #album:the wall,pink floyd
 				artist = songParts[-1]
 				album = "-".join(songParts[:-1])
 				album=album[6:]
 				tracks = getAlbum(artist,album)
-				for track in tracks:
-					if not downloadSong(track,artist,attempt,saveDir):
+				if not tracks:
+					failedDownloads.append(("Album: "+album,artist))
+				for j,track in enumerate(tracks):
+					if not downloadSong(track,artist,attempt,saveDir,str(j+1)):
 						failedDownloads.append((track,artist))
 			if line[:3].lower()=="top": #top 5:pink floyd
 				colonIndex=line.find(':')
@@ -73,15 +75,19 @@ if len(sys.argv) > 2: #using command line arguments
 				n = int(line[3:colonIndex].strip())
 				if n:
 					tracks = getTopN(artist,n)
+					if not tracks:
+						failedDownloads.append(("Top "+str(n),artist))
+						continue
 				else:
 					print "SYNTAX ERROR: "+line
 					print "SKIPPING"
-				for track in tracks:
-					if not downloadSong(track,artist,attempt,saveDir):
+					continue
+				for j,track in enumerate(tracks):
+					if not downloadSong(track,artist,attempt,saveDir,str(j+1)):
 						failedDownloads.append((track,artist))
 			else: #hey you,pink floyd
 				artist = songParts[0]
-				track = ",".join(songParts[1:])
+				track = "-".join(songParts[1:])
 				if not downloadSong(track,artist,attempt,saveDir):
 					failedDownloads.append((track,artist))
 
@@ -128,8 +134,8 @@ if len(sys.argv) > 2: #using command line arguments
 		print "All songs downloaded!"
 else:
 	print "USAGE:"
-	print '-spotify "user@email.com"'
+	print '-spotify myUserName'
 	print '-song "The Beatles" "Come Together"'
-	print '-album "Abbey Road" "The Beatles"'
+	print '-album "The Beatles" "Abbey Road"'
 	print '-top 5 "The Beatles"'
 	print '-file "songList.txt"'
