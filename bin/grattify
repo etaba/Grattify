@@ -71,7 +71,7 @@ if len(sys.argv) > 2: #using command line arguments
 						failedDownloads.append((track,artist))
 			if line[:3].lower()=="top": #top 5:pink floyd
 				colonIndex=line.find(':')
-				artist = line[colonIndex+1:]
+				artist = line[colonIndex+1:].strip()
 				n = int(line[3:colonIndex].strip())
 				if n:
 					tracks = getTopN(artist,n)
