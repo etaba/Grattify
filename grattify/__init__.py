@@ -9,7 +9,7 @@ SPOTIPY_CLIENT_ID = "6ddf2f4253a847c5bac62b17cd735e66"
 SPOTIPY_CLIENT_SECRET = "5b54de875ad349f3bb1bbecd5832f276"
 SPOTIPY_REDIRECT_URI = "http://tabatest://callback"
 
-def downloadSong(title,artist,attempt,saveDir,trackNum=""):
+def downloadSong(title,artist,attempt,saveDir,ytlink=None,trackNum=""):
 	savePath = makeSavepath(title,artist,saveDir)
 	print artist,"---",title
 	options = {
@@ -27,19 +27,15 @@ def downloadSong(title,artist,attempt,saveDir,trackNum=""):
         	'preferredquality': '192',
     	}]
 	}
-	#reformat
-	searchString = artist + ' ' + title
-	searchString = re.sub('[^0-9a-zA-Z ]+', '', searchString.lower()).replace(' ','+')
 	ydl = youtube_dl.YoutubeDL(options)
-	results = getYoutubeSearchResults(searchString)
-	if results == False or len(results) == 0:
-		#try again with unformatted input
-		results = getYoutubeSearchResults(artist+'+'+title)
-		if results == False or len(results) == 0:
+	#reformat
+	if (ytlink is None):
+		songURL = findNthBestLink(attempt,artist.lower(),title.lower())['link']
+		if not songURL:
 			return False
-	songURL = findNthBestLink(attempt,searchString,results,artist.lower(),title.lower())['link']
-	
-	#return
+	else:
+		songURL = ytlink
+
 	try: #video already being downloaded
 		os.stat(savePath)
 		print "%s already downloaded, continuing..." % savePath
@@ -92,14 +88,23 @@ def getYoutubeSearchResults(query):
 						continue
 	return results
 
-def findNthBestLink(n,searchInput,ytResults,artist,title):
+def findNthBestLink(n,artist,title):
+	searchString = artist + ' ' + title
+	searchString = re.sub('[^0-9a-zA-Z ]+', '', searchString.lower()).replace(' ','+')
+	results = getYoutubeSearchResults(searchString)
+	if results == False or len(results) == 0:
+		#try again with unformatted input
+		results = getYoutubeSearchResults(artist+'+'+title)
+		if results == False or len(results) == 0:
+			return False
+
 	badKeywords = ["video","album","live","cover","remix","instrumental","acoustic","karaoke"]
 	goodKeywords = ["audio","lyric"]
 	
-	badKeywords = filter(lambda bk: searchInput.find(bk) < 0,badKeywords)
+	badKeywords = filter(lambda bk: searchString.find(bk) < 0,badKeywords)
 
 	scoreIndex = []
-	for i,ytR in enumerate(ytResults):
+	for i,ytR in enumerate(results):
 		matchScore = i
 		for bk in badKeywords:
 			if ytR['title'].find(bk) != -1:
@@ -115,7 +120,7 @@ def findNthBestLink(n,searchInput,ytResults,artist,title):
 	bestToWorst = sorted(scoreIndex,key=lambda score: score[1])
 	nthBest = bestToWorst[n-1][0]
 	#printResults(ytResults,bestToWorst)
-	return ytResults[nthBest]
+	return results[nthBest]
  		
 def printResults(ytResults,bestToWorst):
 	print "UNSORTED::"

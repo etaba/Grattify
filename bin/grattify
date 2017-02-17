@@ -18,7 +18,7 @@ if len(sys.argv) > 2: #using command line arguments
 		tracks = getAlbum(artist,album)
 		for i,track in enumerate(tracks):
 			print "\nDOWNLOADING SONG %d / %d\n" % (i+1,len(tracks))
-			if not downloadSong(track,artist,1,saveDir,str(i+1)):
+			if not downloadSong(track,artist,1,saveDir,None,str(i+1)):
 				failedDownloads.append((track,artist))
 
 	if sys.argv[1] == "-song" or sys.argv[1] == "-s":
@@ -120,6 +120,16 @@ if len(sys.argv) > 2: #using command line arguments
 			if not downloadSong(track[0],track[1],1,saveDir):
 				failedDownloads.append((track[0],track[1]))
 
+	if sys.argv[1] == "-link" or sys.argv[1] == "-l":
+		saveDir = "songFolder"
+		if not os.path.exists(saveDir):
+			os.makedirs(saveDir)
+		ytlink = sys.argv[2]
+		artist = sys.argv[3]
+		song = sys.argv[4]
+		if not downloadSong(artist,song,1,saveDir,ytlink=ytlink):
+			failedDownloads.append((song,artist))
+
 	if sys.argv[1] == "-debug":
 		ms = compare(sys.argv[2],sys.argv[3])
 		print "%d Changes" % len(ms)
@@ -139,3 +149,4 @@ else:
 	print '-album "The Beatles" "Abbey Road"'
 	print '-top 5 "The Beatles"'
 	print '-file "songList.txt"'
+	print '-link "https://www.youtube.com/watch?v=uSM5MpKSnqE" "The Beatles" "Come Together"'
